@@ -2,7 +2,6 @@ from langchain_pinecone import PineconeVectorStore
 from pinecone import Pinecone
 
 from langchain_core.documents import Document
-from langchain_huggingface import HuggingFaceEmbeddings
 import re
 
 from config import PINECONE_API_KEY, PINECONE_INDEX
@@ -34,11 +33,19 @@ STOP_WORDS = {
 FIELD_HINT_WORDS = {"address", "date", "id", "name", "no", "number"}
 ######################################
 
-embeddings=HuggingFaceEmbeddings(
-    model_name="sentence-transformers/all-MiniLM-L6-v2"
-)
-
 _db = None
+_embeddings = None
+
+
+def _get_embeddings():
+    global _embeddings
+    if _embeddings is None:
+        from langchain_huggingface import HuggingFaceEmbeddings
+
+        _embeddings = HuggingFaceEmbeddings(
+            model_name="sentence-transformers/all-MiniLM-L6-v2"
+        )
+    return _embeddings
 
 
 def _get_pinecone_index():
@@ -54,7 +61,7 @@ def get_db(force_reload=False):
     if _db is None or force_reload:
         _db = PineconeVectorStore(
             index=_get_pinecone_index(),
-            embedding=embeddings
+            embedding=_get_embeddings()
         )
     return _db
 
