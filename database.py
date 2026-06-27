@@ -5,8 +5,6 @@ from config import BASE_DIR
 
 db_pool = None
 
-db_config["ssl_ca"] = Path(__file__).parent / "isrgrootx1.pem"
-
 
 def _build_db_config():
     db_host = os.getenv("DB_HOST")
