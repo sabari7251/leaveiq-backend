@@ -27,7 +27,7 @@ def _build_db_config():
         "use_pure": True,
     }
 
-    # Use explicit CA cert if provided via env var
+    # Use explicit CA cert if provided via env var AND the file exists
     ssl_ca = os.getenv("DB_SSL_CA") or os.getenv("CA")
     if ssl_ca:
         ssl_ca_path = ssl_ca
@@ -35,8 +35,10 @@ def _build_db_config():
             candidate = BASE_DIR / ssl_ca_path
             if candidate.exists():
                 ssl_ca_path = str(candidate)
-        db_config["ssl_ca"] = ssl_ca_path
-        db_config["ssl_verify_cert"] = True
+        # Only use the CA if the file actually exists on this system
+        if os.path.isfile(ssl_ca_path):
+            db_config["ssl_ca"] = ssl_ca_path
+            db_config["ssl_verify_cert"] = True
 
     return db_config
 
