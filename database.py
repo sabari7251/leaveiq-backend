@@ -32,6 +32,18 @@ def _build_db_config():
             if candidate.exists():
                 ssl_ca_path = str(candidate)
         db_config["ssl_ca"] = ssl_ca_path
+    else:
+        # Auto-detect CA cert: bundled file first, then common Linux system paths
+        ca_candidates = [
+            str(BASE_DIR / "isrgrootx1.pem"),
+            "/etc/ssl/certs/ca-certificates.crt",
+            "/etc/pki/tls/certs/ca-bundle.crt",
+            "/etc/ssl/ca-bundle.pem",
+        ]
+        for ca_path in ca_candidates:
+            if os.path.isfile(ca_path):
+                db_config["ssl_ca"] = ca_path
+                break
 
     return db_config
 
