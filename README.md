@@ -11,7 +11,7 @@ Required production variables include database, JWT, mail, Groq/OpenRouter, Pine
 Set `CORS_ORIGINS` to the Vercel frontend URL:
 
 ```text
-CORS_ORIGINS=https://your-leaveiq-frontend.vercel.app
+CORS_ORIGINS=https://leaveiq-frontend.vercel.app
 ```
 
 ## Local
