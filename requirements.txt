@@ -2,7 +2,8 @@ fastapi
 uvicorn[standard]
 python-dotenv
 python-jose[cryptography]
-passlib[bcrypt]
+bcrypt==4.0.1
+passlib
 mysql-connector-python
 fastapi-mail
 python-multipart
