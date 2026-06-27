@@ -21,6 +21,8 @@ if ssl_ca:
             ssl_ca_path = str(candidate)
     db_config["ssl_ca"] = ssl_ca_path
 
+db_config["ssl_ca"] = Path(__file__).parent / "isrgrootx1.pem"
+
 
 db_pool = MySQLConnectionPool(
     pool_name="leaveiq_pool",
