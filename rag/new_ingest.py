@@ -1,9 +1,3 @@
-from langchain_community.document_loaders import PyPDFLoader
-from langchain_text_splitters import RecursiveCharacterTextSplitter
-from langchain_community.vectorstores.utils import filter_complex_metadata
-from langchain_huggingface import HuggingFaceEmbeddings
-from pinecone import Pinecone
-from langchain_pinecone import PineconeVectorStore
 from pathlib import Path
 import re,os
 
@@ -11,7 +5,6 @@ from config import PINECONE_API_KEY, PINECONE_INDEX
 
 BASE_DIR = Path(__file__).resolve().parent
 PDF_PATH = BASE_DIR / "Corporate Leave Policy Template.pdf"
-
 LOW_VALUE_CATEGORIES = {"Footer", "Header"}
 MIN_CHARS = 40
 
@@ -36,6 +29,8 @@ def is_useful_chunk(doc) -> bool:
     return True
 
 def _get_pinecone_index():
+    from pinecone import Pinecone
+
     if not PINECONE_API_KEY:
         raise RuntimeError("PINECONE_API_KEY environment variable is required")
     if not PINECONE_INDEX:
@@ -45,6 +40,12 @@ def _get_pinecone_index():
 
 
 def ingest_pdf(pdf_path: Path, **kwargs):
+    from langchain_community.document_loaders import PyPDFLoader
+    from langchain_text_splitters import RecursiveCharacterTextSplitter
+    from langchain_community.vectorstores.utils import filter_complex_metadata
+    from langchain_huggingface import HuggingFaceEmbeddings
+    from langchain_pinecone import PineconeVectorStore
+
     loader = PyPDFLoader(file_path=str(pdf_path))
     docs=loader.load()
 

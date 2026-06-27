@@ -1,7 +1,3 @@
-from langchain_pinecone import PineconeVectorStore
-from pinecone import Pinecone
-
-from langchain_core.documents import Document
 import re
 
 from config import PINECONE_API_KEY, PINECONE_INDEX
@@ -49,6 +45,8 @@ def _get_embeddings():
 
 
 def _get_pinecone_index():
+    from pinecone import Pinecone
+
     if not PINECONE_API_KEY:
         raise RuntimeError("PINECONE_API_KEY environment variable is required")
     if not INDEX_NAME:
@@ -57,6 +55,8 @@ def _get_pinecone_index():
     return pc.Index(INDEX_NAME)
 
 def get_db(force_reload=False):
+    from langchain_pinecone import PineconeVectorStore
+
     global _db
     if _db is None or force_reload:
         _db = PineconeVectorStore(

@@ -5,7 +5,6 @@ import os
 import shutil
 from pathlib import Path
 from fastapi import APIRouter, BackgroundTasks, Depends, File, UploadFile, HTTPException, status
-from groq import Groq
 
 from ai import getIntent, get_weekly_summary
 from auth import get_current_user
@@ -320,6 +319,7 @@ def chat(chatreuqest:ChatBot,background_tasks:BackgroundTasks, cursor=Depends(ge
     ]
 
     import time as _time
+    from groq import Groq
 
     if not GROQ_API_KEY:
         raise RuntimeError("GROQ_API_KEY environment variable is required")

@@ -1,11 +1,12 @@
 import datetime
 import json
-from openrouter import OpenRouter
 
 from config import OPENROUTER_API_KEY, OPENROUTER_MODEL
 
 
 def get_openrouter_client():
+    from openrouter import OpenRouter
+
     if not OPENROUTER_API_KEY:
         raise RuntimeError("OPENROUTER_API_KEY environment variable is required")
     return OpenRouter(api_key=OPENROUTER_API_KEY)
