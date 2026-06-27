@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: leaveiq-backend
+    env: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: ENVIRONMENT
+        value: production
+      - key: UPLOAD_DIR
+        value: /tmp/leaveiq_uploads
