@@ -31,4 +31,10 @@ Settings:
 - Start command: `uvicorn main:app --host 0.0.0.0 --port $PORT`
 - Add all variables from `.env.example` in Render Environment.
 
+If Render logs show `Running 'uvicorn main:app --reload'`, update the service's Start Command in the Render dashboard to:
+
+```bash
+uvicorn main:app --host 0.0.0.0 --port $PORT
+```
+
 Policy uploads are saved under `UPLOAD_DIR` and indexed into Pinecone using `rag/new_ingest.py` and `rag/new_retriever.py`; Chroma DB files are not required for production.
