@@ -21,9 +21,13 @@ def _build_db_config():
         "user": db_user,
         "password": db_password,
         "database": db_name,
-        "ssl_verify_cert": True,
+        "ssl_disabled": False,
+        "ssl_verify_cert": False,
+        "ssl_verify_identity": False,
+        "use_pure": True,
     }
 
+    # Use explicit CA cert if provided via env var
     ssl_ca = os.getenv("DB_SSL_CA") or os.getenv("CA")
     if ssl_ca:
         ssl_ca_path = ssl_ca
@@ -32,18 +36,7 @@ def _build_db_config():
             if candidate.exists():
                 ssl_ca_path = str(candidate)
         db_config["ssl_ca"] = ssl_ca_path
-    else:
-        # Auto-detect CA cert: bundled file first, then common Linux system paths
-        ca_candidates = [
-            str(BASE_DIR / "isrgrootx1.pem"),
-            "/etc/ssl/certs/ca-certificates.crt",
-            "/etc/pki/tls/certs/ca-bundle.crt",
-            "/etc/ssl/ca-bundle.pem",
-        ]
-        for ca_path in ca_candidates:
-            if os.path.isfile(ca_path):
-                db_config["ssl_ca"] = ca_path
-                break
+        db_config["ssl_verify_cert"] = True
 
     return db_config
 
