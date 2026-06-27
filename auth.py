@@ -1,4 +1,5 @@
 import datetime
+import os
 from jose import JWTError, jwt
 from fastapi import Depends, HTTPException
 from passlib.context import CryptContext
@@ -13,6 +14,9 @@ pwd_context = CryptContext(
 
 
 def create_accessToken(data:dict):
+    if not JWT_SECRET_KEY:
+        raise RuntimeError("JWT_SECRET_KEY environment variable is required")
+
     to_encode = data.copy()
     expire = datetime.datetime.utcnow() + datetime.timedelta(minutes=JWT_EXPIRE_MINUTES)
 
@@ -33,6 +37,11 @@ oauth2_scheme = OAuth2PasswordBearer(
 )
 
 def get_current_user(token:str=Depends(oauth2_scheme)):
+    if not JWT_SECRET_KEY:
+        raise HTTPException(
+            status_code=500,
+            detail="JWT_SECRET_KEY is not configured"
+        )
 
     try:
         decoded = jwt.decode(

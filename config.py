@@ -41,7 +41,7 @@ CORS_ORIGINS = get_list_env(
     ],
 )
 
-JWT_SECRET_KEY = get_env("JWT_SECRET_KEY", required=True)
+JWT_SECRET_KEY = get_env("JWT_SECRET_KEY")
 JWT_ALGORITHM = get_env("JWT_ALGORITHM", "HS256")
 JWT_EXPIRE_MINUTES = get_int_env("JWT_EXPIRE_MINUTES", 30)
 
@@ -54,3 +54,4 @@ PINECONE_API_KEY = get_env("PINECONE_API_KEY")
 PINECONE_INDEX = get_env("PINECONE_INDEX")
 
 UPLOAD_DIR = Path(get_env("UPLOAD_DIR", str(BASE_DIR / "uploads"))).resolve()
+
