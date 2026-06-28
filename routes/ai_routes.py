@@ -370,9 +370,64 @@ def chat(chatreuqest:ChatBot,background_tasks:BackgroundTasks, cursor=Depends(ge
     return "Maximum iterations reached."
 
 
+def _process_policy_file(temp_path: Path, safe_name: str, uploaded_by: str):
+    """Background task: chunk the PDF, embed it, and push to Pinecone."""
+    try:
+        cleaned, raw = ingest_pdf(temp_path)
+
+        # Remove old policy PDFs (keep only the newly uploaded one)
+        for pdf in UPLOAD_DIR.glob("*.pdf"):
+            if pdf.name != "temp_policy.pdf":
+                try:
+                    pdf.unlink()
+                except Exception:
+                    pass
+
+        # Rename temp file to its final name
+        final_path = UPLOAD_DIR / safe_name
+        temp_path.rename(final_path)
+
+        metadata = {
+            "filename": safe_name,
+            "uploaded_at": datetime.utcnow().isoformat(),
+            "uploaded_by": uploaded_by,
+            "chunks": cleaned,
+            "status": "ready"
+        }
+        with open(UPLOAD_DIR / "metadata.json", "w") as f:
+            json.dump(metadata, f)
+
+        print(f"[INFO] Policy '{safe_name}' indexed successfully – {cleaned} chunks.")
+
+    except Exception as exc:
+        # Write error status so /policies/active can surface it
+        try:
+            error_meta = {
+                "filename": safe_name,
+                "uploaded_at": datetime.utcnow().isoformat(),
+                "uploaded_by": uploaded_by,
+                "status": "error",
+                "error": str(exc)
+            }
+            with open(UPLOAD_DIR / "metadata.json", "w") as f:
+                json.dump(error_meta, f)
+        except Exception:
+            pass
+
+        # Clean up the temp file if it still exists
+        if temp_path.exists():
+            try:
+                temp_path.unlink()
+            except Exception:
+                pass
+
+        print(f"[ERROR] Policy processing failed for '{safe_name}': {exc}")
+
+
 @router.post("/policies/upload")
 def upload_policy(
     file: UploadFile = File(...),
+    background_tasks: BackgroundTasks,
     current_user=Depends(get_current_user)
 ):
     if current_user["role"] != "Manager":
@@ -392,51 +447,39 @@ def upload_policy(
     safe_filename = Path(file.filename).name
     temp_file_path = UPLOAD_DIR / "temp_policy.pdf"
 
+    # Save the uploaded PDF to disk immediately (fast – just I/O)
     try:
         with open(temp_file_path, "wb") as f:
             shutil.copyfileobj(file.file, f)
-
-        # Chunk PDF and upload embeddings to Pinecone
-        cleaned, raw = ingest_pdf(temp_file_path)
-
-        # Remove previous policy PDFs
-        for pdf in UPLOAD_DIR.glob("*.pdf"):
-            if pdf.name != "temp_policy.pdf":
-                try:
-                    pdf.unlink()
-                except Exception:
-                    pass
-
-        # Rename uploaded file
-        final_file_path = UPLOAD_DIR / safe_filename
-        temp_file_path.rename(final_file_path)
-
-        metadata = {
-            "filename": safe_filename,
-            "uploaded_at": datetime.utcnow().isoformat(),
-            "uploaded_by": current_user["sub"]
-        }
-
-        with open(UPLOAD_DIR / "metadata.json", "w") as f:
-            json.dump(metadata, f)
-
-        return {
-            "message": "Policy uploaded and indexed successfully.",
-            "filename": safe_filename,
-            "chunks": cleaned
-        }
-
     except Exception as e:
-        if temp_file_path.exists():
-            try:
-                temp_file_path.unlink()
-            except Exception:
-                pass
-
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to process policy: {str(e)}"
+            detail=f"Failed to save uploaded file: {str(e)}"
         )
+
+    # Write a "processing" status so the UI can show it right away
+    processing_meta = {
+        "filename": safe_filename,
+        "uploaded_at": datetime.utcnow().isoformat(),
+        "uploaded_by": current_user.get("sub", ""),
+        "status": "processing"
+    }
+    with open(UPLOAD_DIR / "metadata.json", "w") as f:
+        json.dump(processing_meta, f)
+
+    # Hand off the heavy work (chunking + embedding + Pinecone) to a background task
+    background_tasks.add_task(
+        _process_policy_file,
+        temp_file_path,
+        safe_filename,
+        current_user.get("sub", "")
+    )
+
+    return {
+        "message": "Policy received and indexing started in background.",
+        "filename": safe_filename,
+        "status": "processing"
+    }
         
 @router.get("/policies/active")
 def get_active_policy(current_user = Depends(get_current_user)):
