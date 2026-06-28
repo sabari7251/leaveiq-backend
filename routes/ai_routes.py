@@ -426,8 +426,8 @@ def _process_policy_file(temp_path: Path, safe_name: str, uploaded_by: str):
 
 @router.post("/policies/upload")
 def upload_policy(
-    file: UploadFile = File(...),
     background_tasks: BackgroundTasks,
+    file: UploadFile = File(...),
     current_user=Depends(get_current_user)
 ):
     if current_user["role"] != "Manager":
